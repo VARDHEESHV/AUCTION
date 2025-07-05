@@ -73,6 +73,33 @@ textarea { resize: none; }
   display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
+/* Price editing input styles */
+.price-input {
+  width: 70px !important;
+  padding: 4px 8px !important;
+  margin-left: 8px;
+  border: 1px solid #3498db !important;
+  border-radius: 6px !important;
+  background: #fff !important;
+  font-size: 0.9rem !important;
+  font-weight: 600;
+  color: #2c3e50 !important;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.price-input:focus {
+  outline: none !important;
+  border-color: #2980b9 !important;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2) !important;
+  background: #f8f9fa !important;
+}
+
+.price-input:hover {
+  border-color: #2980b9 !important;
+  background: #f8f9fa !important;
+}
+
 /* Party Popper Celebration Styles */
 .celebration-container {
   position: fixed;
@@ -291,7 +318,15 @@ function saveTeamNames() {
 function renderTeams() {
   teamsDisplay.innerHTML = '';
   teams.forEach((team) => {
-    let playersHTML = team.players.map(p => `<li><span style="color:#2c3e50;">${p.name}</span> - Rs. ${p.price.toFixed(2)} Cr</li>`).join('');
+    let playersHTML = team.players.map((p, idx) => 
+    `<li>
+      <span style="color:#2c3e50;">${p.name}</span> - 
+     <input type="number" value="${p.price.toFixed(2)}" 
+            onchange="updatePrice(${teams.indexOf(team)}, ${idx}, this.value)" 
+            class="price-input" step="0.1" min="0.1"> Cr
+  </li>`
+).join('');
+
     teamsDisplay.innerHTML += `
     <div class="team-box">
       <strong>${team.name}</strong>
@@ -300,6 +335,24 @@ function renderTeams() {
     </div>`;
   });
 }
+
+function updatePrice(teamIdx, playerIdx, newPrice) {
+  const price = parseFloat(newPrice);
+  if (isNaN(price) || price < 0) return;
+  const player = teams[teamIdx].players[playerIdx];
+  const diff = price - player.price;
+
+  if (teams[teamIdx].purse < diff) {
+    alert("Not enough purse to increase the price!");
+    renderTeams(); // revert
+    return;
+  }
+
+  teams[teamIdx].purse -= diff;
+  player.price = price;
+  renderTeams();
+}
+
 
 function renderBidButtons() {
   bidButtons.innerHTML = '';
