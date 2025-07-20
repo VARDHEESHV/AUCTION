@@ -512,23 +512,25 @@ function renderTeams() {
   // Render teams
   teams.forEach((team) => {
     let playersHTML = team.players.map((p, idx) => 
-    `<li>
-      <div>
-        <span style="color:#2c3e50;">${p.name}</span> - 
-        <input type="number" value="${p.price.toFixed(2)}" 
-               onchange="updatePrice(${teams.indexOf(team)}, ${idx}, this.value)" 
-               class="price-input" step="0.1" min="0.1"> Cr
-      </div>
-      <button class="delete-btn" onclick="showDeleteConfirmation(${teams.indexOf(team)}, ${idx}, '${p.name}')"></button>
-    </li>`
-    ).join('');
+  `<li>
+    <div>
+      <span style="color:#2c3e50;">${idx + 1}. ${p.name}</span> - 
+      <input type="number" value="${p.price.toFixed(2)}" 
+             onchange="updatePrice(${teams.indexOf(team)}, ${idx}, this.value)" 
+             class="price-input" step="0.1" min="0.1"> Cr
+    </div>
+    <button class="delete-btn" onclick="showDeleteConfirmation(${teams.indexOf(team)}, ${idx}, '${p.name}')"></button>
+  </li>`
+).join('');
+
 
     teamsDisplay.innerHTML += `
-    <div class="team-box">
-      <strong>${team.name}</strong>
-      <div class="purse-display">💰 Rs. ${team.purse.toFixed(2)} Cr left</div>
-      <ul>${playersHTML||'<li>No players yet</li>'}</ul>
-    </div>`;
+<div class="team-box">
+  <strong>${team.name} (Total: ${team.players.length} players)</strong>
+  <div class="purse-display">💰 Rs. ${team.purse.toFixed(2)} Cr left</div>
+  <ul>${playersHTML || '<li>No players yet</li>'}</ul>
+</div>`;
+
   });
 
   // Render unsold players box
@@ -638,19 +640,28 @@ function pickNextPlayer() {
 }
 
 function sellTo(i) {
-  if (!currentPlayer) return alert("No player");
-  const bidPrice = +bidPriceInput.value;
-  if (!bidPrice || bidPrice<=0) return alert("Invalid bid");
-  if (teams[i].purse<bidPrice) return alert("Not enough purse");
+ if (!currentPlayer) return alert("No player");
+
+  // Parse the player name and base price from brackets
+  let match = currentPlayer.match(/^(.+?)\s*\((\d+)\)$/);
+  let cleanName = match ? match[1].trim() : currentPlayer.trim();
+
+  // Get the bid price YOU entered (in Cr)
+  const bidPrice = parseFloat(bidPriceInput.value);
+
+  if (!bidPrice || bidPrice <= 0) return alert("Invalid bid price!");
+  if (teams[i].purse < bidPrice) return alert("Not enough purse!");
+
   teams[i].purse -= bidPrice;
-  teams[i].players.push({name:currentPlayer, price:bidPrice});
-  renderTeams(); 
-  
-  // Trigger party popper celebration
+  teams[i].players.push({ name: cleanName, price: bidPrice });
+
+  renderTeams();
+
+  // Party popper etc
   partyPopperCelebration(teams[i].name);
-  
-  currentPlayer=null; 
-  setTimeout(() => pickNextPlayer(), 1200); // Reduced delay for faster pace
+
+  currentPlayer = null;
+  setTimeout(() => pickNextPlayer(), 1200);
 }
 
 function markUnsold() {
